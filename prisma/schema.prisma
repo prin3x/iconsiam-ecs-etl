@@ -1,0 +1,2073 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model api_sync_logs {
+  id                                              Int                                               @id @default(autoincrement())
+  sync_id                                         String                                            @unique(map: "api_sync_logs_sync_id_idx") @db.VarChar
+  status                                          enum_api_sync_logs_status                         @default(RUNNING)
+  started_at                                      DateTime                                          @db.Timestamptz(3)
+  completed_at                                    DateTime?                                         @db.Timestamptz(3)
+  duration_seconds                                Decimal?                                          @db.Decimal
+  external_api_url                                String                                            @db.VarChar
+  api_response_summary_total_records_fetched      Decimal?                                          @default(0) @db.Decimal
+  api_response_summary_total_pages                Decimal?                                          @default(0) @db.Decimal
+  api_response_summary_last_page_processed        Decimal?                                          @default(0) @db.Decimal
+  processing_summary_records_processed            Decimal?                                          @default(0) @db.Decimal
+  processing_summary_records_created              Decimal?                                          @default(0) @db.Decimal
+  processing_summary_records_updated              Decimal?                                          @default(0) @db.Decimal
+  processing_summary_records_failed               Decimal?                                          @default(0) @db.Decimal
+  processing_summary_shops_processed              Decimal?                                          @default(0) @db.Decimal
+  processing_summary_dinings_processed            Decimal?                                          @default(0) @db.Decimal
+  performance_metrics_avg_time_per_record         Decimal?                                          @db.Decimal
+  performance_metrics_memory_usage_mb             Decimal?                                          @db.Decimal
+  performance_metrics_api_response_time_avg       Decimal?                                          @db.Decimal
+  notes                                           String?                                           @db.VarChar
+  updated_at                                      DateTime                                          @default(now()) @db.Timestamptz(3)
+  created_at                                      DateTime                                          @default(now()) @db.Timestamptz(3)
+  api_sync_logs_errors                            api_sync_logs_errors[]
+  api_sync_logs_unmapped_data_unmapped_categories api_sync_logs_unmapped_data_unmapped_categories[]
+  api_sync_logs_unmapped_data_unmapped_floors     api_sync_logs_unmapped_data_unmapped_floors[]
+  api_sync_logs_validation_issues                 api_sync_logs_validation_issues[]
+  payload_locked_documents_rels                   payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model api_sync_logs_errors {
+  order            Int           @map("_order")
+  parent_id        Int           @map("_parent_id")
+  id               String        @id @db.VarChar
+  timestamp        DateTime?     @db.Timestamptz(3)
+  record_unique_id String?       @db.VarChar
+  error_message    String?       @db.VarChar
+  error_stack      String?       @db.VarChar
+  api_sync_logs    api_sync_logs @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "api_sync_logs_errors_parent_id_fk")
+
+  @@index([order], map: "api_sync_logs_errors_order_idx")
+  @@index([parent_id], map: "api_sync_logs_errors_parent_id_idx")
+}
+
+model api_sync_logs_unmapped_data_unmapped_categories {
+  order         Int                                                        @map("_order")
+  parent_id     Int                                                        @map("_parent_id")
+  id            String                                                     @id @db.VarChar
+  category_name String?                                                    @db.VarChar
+  type          enum_api_sync_logs_unmapped_data_unmapped_categories_type?
+  english_name  String?                                                    @db.VarChar
+  thai_name     String?                                                    @db.VarChar
+  api_sync_logs api_sync_logs                                              @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "api_sync_logs_unmapped_data_unmapped_categories_parent_id_fk")
+
+  @@index([order], map: "api_sync_logs_unmapped_data_unmapped_categories_order_idx")
+  @@index([parent_id], map: "api_sync_logs_unmapped_data_unmapped_categories_parent_id_idx")
+}
+
+model api_sync_logs_unmapped_data_unmapped_floors {
+  order         Int           @map("_order")
+  parent_id     Int           @map("_parent_id")
+  id            String        @id @db.VarChar
+  floor_name    String?       @db.VarChar
+  api_sync_logs api_sync_logs @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "api_sync_logs_unmapped_data_unmapped_floors_parent_id_fk")
+
+  @@index([order], map: "api_sync_logs_unmapped_data_unmapped_floors_order_idx")
+  @@index([parent_id], map: "api_sync_logs_unmapped_data_unmapped_floors_parent_id_idx")
+}
+
+model api_sync_logs_validation_issues {
+  order            Int           @map("_order")
+  parent_id        Int           @map("_parent_id")
+  id               String        @id @db.VarChar
+  record_unique_id String?       @db.VarChar
+  description      String?       @db.VarChar
+  api_sync_logs    api_sync_logs @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "api_sync_logs_validation_issues_parent_id_fk")
+
+  @@index([order], map: "api_sync_logs_validation_issues_order_idx")
+  @@index([parent_id], map: "api_sync_logs_validation_issues_parent_id_idx")
+}
+
+model attractions {
+  id                                                 Int                               @id @default(autoincrement())
+  main_image_url_id                                  Int?
+  feature_image_url_id                               Int?
+  showcase_image_url_id                              Int?
+  gallery_main_image_url_id                          Int?
+  status                                             enum_attractions_status           @default(ACTIVE)
+  is_featured                                        Boolean?
+  updated_at                                         DateTime                          @default(now()) @db.Timestamptz(3)
+  created_at                                         DateTime                          @default(now()) @db.Timestamptz(3)
+  slug                                               String?                           @db.VarChar
+  order                                              Decimal                           @db.Decimal
+  slug_lock                                          Boolean?                          @default(true)
+  showcase_background_color                          String?                           @default("#000000") @db.VarChar
+  media_attractions_feature_image_url_idTomedia      media?                            @relation("attractions_feature_image_url_idTomedia", fields: [feature_image_url_id], references: [id], onUpdate: NoAction, map: "attractions_feature_image_url_id_media_id_fk")
+  media_attractions_gallery_main_image_url_idTomedia media?                            @relation("attractions_gallery_main_image_url_idTomedia", fields: [gallery_main_image_url_id], references: [id], onUpdate: NoAction, map: "attractions_gallery_main_image_url_id_media_id_fk")
+  media_attractions_main_image_url_idTomedia         media?                            @relation("attractions_main_image_url_idTomedia", fields: [main_image_url_id], references: [id], onUpdate: NoAction, map: "attractions_main_image_url_id_media_id_fk")
+  media_attractions_showcase_image_url_idTomedia     media?                            @relation("attractions_showcase_image_url_idTomedia", fields: [showcase_image_url_id], references: [id], onUpdate: NoAction, map: "attractions_showcase_image_url_id_media_id_fk")
+  attractions_gallery_image_urls                     attractions_gallery_image_urls[]
+  attractions_highlight_image_url                    attractions_highlight_image_url[]
+  attractions_keywords                               attractions_keywords[]
+  attractions_locales                                attractions_locales[]
+  directory_rels                                     directory_rels[]
+  events_rels                                        events_rels[]
+  homepage_rels                                      homepage_rels[]
+  news_press_rels                                    news_press_rels[]
+  payload_locked_documents_rels                      payload_locked_documents_rels[]
+  promotions_rels                                    promotions_rels[]
+  stories_rels                                       stories_rels[]
+
+  @@index([created_at])
+  @@index([feature_image_url_id], map: "attractions_feature_image_url_idx")
+  @@index([gallery_main_image_url_id], map: "attractions_gallery_main_image_url_idx")
+  @@index([main_image_url_id], map: "attractions_main_image_url_idx")
+  @@index([showcase_image_url_id], map: "attractions_showcase_image_url_idx")
+  @@index([slug])
+  @@index([updated_at])
+}
+
+model attractions_gallery_image_urls {
+  order        Int         @map("_order")
+  parent_id    Int         @map("_parent_id")
+  id           String      @id @db.VarChar
+  image_url_id Int?
+  media        media?      @relation(fields: [image_url_id], references: [id], onUpdate: NoAction, map: "attractions_gallery_image_urls_image_url_id_media_id_fk")
+  attractions  attractions @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "attractions_gallery_image_urls_parent_id_fk")
+
+  @@index([image_url_id], map: "attractions_gallery_image_urls_image_url_idx")
+  @@index([order], map: "attractions_gallery_image_urls_order_idx")
+  @@index([parent_id], map: "attractions_gallery_image_urls_parent_id_idx")
+}
+
+model attractions_highlight_image_url {
+  order        Int         @map("_order")
+  parent_id    Int         @map("_parent_id")
+  id           String      @id @db.VarChar
+  image_url_id Int?
+  media        media?      @relation(fields: [image_url_id], references: [id], onUpdate: NoAction, map: "attractions_highlight_image_url_image_url_id_media_id_fk")
+  attractions  attractions @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "attractions_highlight_image_url_parent_id_fk")
+
+  @@index([image_url_id], map: "attractions_highlight_image_url_image_url_idx")
+  @@index([order], map: "attractions_highlight_image_url_order_idx")
+  @@index([parent_id], map: "attractions_highlight_image_url_parent_id_idx")
+}
+
+model attractions_keywords {
+  order       Int         @map("_order")
+  parent_id   Int         @map("_parent_id")
+  locale      locales     @map("_locale")
+  id          String      @id @db.VarChar
+  keyword     String?     @db.VarChar
+  attractions attractions @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "attractions_keywords_parent_id_fk")
+
+  @@index([locale], map: "attractions_keywords_locale_idx")
+  @@index([order], map: "attractions_keywords_order_idx")
+  @@index([parent_id], map: "attractions_keywords_parent_id_idx")
+}
+
+model attractions_locales {
+  title                String?     @db.VarChar
+  subtitle             String?     @db.VarChar
+  description          String?     @db.VarChar
+  feature_title        String?     @db.VarChar
+  feature_description  String?     @db.VarChar
+  showcase_title       String?     @db.VarChar
+  showcase_description String?     @db.VarChar
+  gallery_title        String?     @db.VarChar
+  gallery_description  String?     @db.VarChar
+  meta_title           String?     @db.VarChar
+  meta_description     String?     @db.VarChar
+  id                   Int         @id @default(autoincrement())
+  locale               locales     @map("_locale")
+  parent_id            Int         @map("_parent_id")
+  showcase_subtitle    String?     @db.VarChar
+  attractions          attractions @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "attractions_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "attractions_locales_locale_parent_id_unique")
+}
+
+model categories {
+  id                            Int                             @id @default(autoincrement())
+  image_id                      Int?
+  type                          enum_categories_type
+  order                         Decimal?                        @default(0) @db.Decimal
+  status                        enum_categories_status          @default(ACTIVE)
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  slug                          String                          @unique(map: "categories_slug_idx") @db.VarChar
+  original_id                   String?                         @db.VarChar
+  pin_to_directory              Boolean?                        @default(false)
+  media                         media?                          @relation(fields: [image_id], references: [id], onUpdate: NoAction, map: "categories_image_id_media_id_fk")
+  categories_locales            categories_locales[]
+  dinings_rels                  dinings_rels[]
+  events_rels                   events_rels[]
+  news_press_rels               news_press_rels[]
+  payload_locked_documents_rels payload_locked_documents_rels[]
+  promotions_rels               promotions_rels[]
+  shops_rels                    shops_rels[]
+  stories_rels                  stories_rels[]
+
+  @@index([created_at])
+  @@index([image_id], map: "categories_image_idx")
+  @@index([original_id])
+  @@index([updated_at])
+}
+
+model categories_locales {
+  name         String?    @db.VarChar
+  description  String?    @db.VarChar
+  id           Int        @id @default(autoincrement())
+  locale       locales    @map("_locale")
+  parent_id    Int        @map("_parent_id")
+  display_name String?    @db.VarChar
+  categories   categories @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "categories_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "categories_locales_locale_parent_id_unique")
+}
+
+model dinings {
+  id                                            Int                             @id @default(autoincrement())
+  floor_id                                      Int?
+  location_zone                                 String?                         @db.VarChar
+  opening_hours_same_hours_every_day            Boolean?                        @default(true)
+  opening_hours_open                            String?                         @db.VarChar
+  opening_hours_close                           String?                         @db.VarChar
+  status                                        enum_dinings_status             @default(ACTIVE)
+  is_featured                                   Boolean?
+  updated_at                                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                                    DateTime                        @default(now()) @db.Timestamptz(3)
+  slug                                          String?                         @db.VarChar
+  slug_lock                                     Boolean?                        @default(true)
+  location_coordinates_poi_x                    Decimal?                        @default(0) @db.Decimal
+  location_coordinates_poi_y                    Decimal?                        @default(0) @db.Decimal
+  contact_info_website                          String?                         @db.VarChar
+  contact_info_phone                            String?                         @db.VarChar
+  contact_info_instagram_url                    String?                         @db.VarChar
+  contact_info_facebook_url                     String?                         @db.VarChar
+  contact_info_wechat_account                   String?                         @db.VarChar
+  contact_info_line_account                     String?                         @db.VarChar
+  contact_info_weibo_url                        String?                         @db.VarChar
+  images_logo_id                                Int?
+  images_main_image_id                          Int?
+  images_thumbnail_id                           Int?
+  images_facebook_image_id                      Int?
+  date_range_start_date                         DateTime?                       @db.Timestamptz(3)
+  date_range_end_date                           DateTime?                       @db.Timestamptz(3)
+  short_alphabet                                String?                         @db.VarChar
+  sort_order                                    Decimal?                        @db.Decimal
+  unique_id                                     String?                         @db.VarChar
+  pin_to_iconluxe                               Boolean?                        @default(false)
+  floors                                        floors?                         @relation(fields: [floor_id], references: [id], onUpdate: NoAction, map: "dinings_floor_id_floors_id_fk")
+  media_dinings_images_facebook_image_idTomedia media?                          @relation("dinings_images_facebook_image_idTomedia", fields: [images_facebook_image_id], references: [id], onUpdate: NoAction, map: "dinings_images_facebook_image_id_media_id_fk")
+  media_dinings_images_logo_idTomedia           media?                          @relation("dinings_images_logo_idTomedia", fields: [images_logo_id], references: [id], onUpdate: NoAction, map: "dinings_images_logo_id_media_id_fk")
+  media_dinings_images_main_image_idTomedia     media?                          @relation("dinings_images_main_image_idTomedia", fields: [images_main_image_id], references: [id], onUpdate: NoAction, map: "dinings_images_main_image_id_media_id_fk")
+  media_dinings_images_thumbnail_idTomedia      media?                          @relation("dinings_images_thumbnail_idTomedia", fields: [images_thumbnail_id], references: [id], onUpdate: NoAction, map: "dinings_images_thumbnail_id_media_id_fk")
+  dinings_images_gallery                        dinings_images_gallery[]
+  dinings_keywords                              dinings_keywords[]
+  dinings_locales                               dinings_locales[]
+  dinings_opening_hours_per_day                 dinings_opening_hours_per_day[]
+  dinings_rels_dinings_rels_dinings_idTodinings dinings_rels[]                  @relation("dinings_rels_dinings_idTodinings")
+  dinings_rels_dinings_rels_parent_idTodinings  dinings_rels[]                  @relation("dinings_rels_parent_idTodinings")
+  dinings_tags                                  dinings_tags[]
+  directory_rels                                directory_rels[]
+  events_rels                                   events_rels[]
+  homepage_dinings                              homepage_dinings[]
+  homepage_rels                                 homepage_rels[]
+  news_press_rels                               news_press_rels[]
+  payload_locked_documents_rels                 payload_locked_documents_rels[]
+  promotions_rels                               promotions_rels[]
+  shops_rels                                    shops_rels[]
+  stories_rels                                  stories_rels[]
+
+  @@index([created_at])
+  @@index([floor_id], map: "dinings_floor_idx")
+  @@index([images_facebook_image_id], map: "dinings_images_images_facebook_image_idx")
+  @@index([images_logo_id], map: "dinings_images_images_logo_idx")
+  @@index([images_main_image_id], map: "dinings_images_images_main_image_idx")
+  @@index([images_thumbnail_id], map: "dinings_images_images_thumbnail_idx")
+  @@index([slug])
+  @@index([updated_at])
+}
+
+model dinings_images_gallery {
+  order     Int     @map("_order")
+  parent_id Int     @map("_parent_id")
+  id        String  @id @db.VarChar
+  image_id  Int?
+  media     media?  @relation(fields: [image_id], references: [id], onUpdate: NoAction, map: "dinings_images_gallery_image_id_media_id_fk")
+  dinings   dinings @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dinings_images_gallery_parent_id_fk")
+
+  @@index([image_id], map: "dinings_images_gallery_image_idx")
+  @@index([order], map: "dinings_images_gallery_order_idx")
+  @@index([parent_id], map: "dinings_images_gallery_parent_id_idx")
+}
+
+model dinings_keywords {
+  order     Int     @map("_order")
+  parent_id Int     @map("_parent_id")
+  locale    locales @map("_locale")
+  id        String  @id @db.VarChar
+  keyword   String? @db.VarChar
+  dinings   dinings @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dinings_keywords_parent_id_fk")
+
+  @@index([locale], map: "dinings_keywords_locale_idx")
+  @@index([order], map: "dinings_keywords_order_idx")
+  @@index([parent_id], map: "dinings_keywords_parent_id_idx")
+}
+
+model dinings_locales {
+  title                String? @db.VarChar
+  subtitle             String? @db.VarChar
+  description          String? @db.VarChar
+  location_shop_number String? @db.VarChar
+  meta_title           String? @db.VarChar
+  meta_description     String? @db.VarChar
+  id                   Int     @id @default(autoincrement())
+  locale               locales @map("_locale")
+  parent_id            Int     @map("_parent_id")
+  dinings              dinings @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dinings_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "dinings_locales_locale_parent_id_unique")
+}
+
+model dinings_opening_hours_per_day {
+  order     Int                                     @map("_order")
+  parent_id Int                                     @map("_parent_id")
+  id        String                                  @id @db.VarChar
+  day       enum_dinings_opening_hours_per_day_day?
+  open      String?                                 @db.VarChar
+  close     String?                                 @db.VarChar
+  dinings   dinings                                 @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dinings_opening_hours_per_day_parent_id_fk")
+
+  @@index([order], map: "dinings_opening_hours_per_day_order_idx")
+  @@index([parent_id], map: "dinings_opening_hours_per_day_parent_id_idx")
+}
+
+model dinings_rels {
+  id                                       Int         @id @default(autoincrement())
+  order                                    Int?
+  parent_id                                Int
+  path                                     String      @db.VarChar
+  categories_id                            Int?
+  dinings_id                               Int?
+  shops_id                                 Int?
+  promotions_id                            Int?
+  categories                               categories? @relation(fields: [categories_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dinings_rels_categories_fk")
+  dinings_dinings_rels_dinings_idTodinings dinings?    @relation("dinings_rels_dinings_idTodinings", fields: [dinings_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dinings_rels_dinings_fk")
+  dinings_dinings_rels_parent_idTodinings  dinings     @relation("dinings_rels_parent_idTodinings", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dinings_rels_parent_fk")
+  promotions                               promotions? @relation(fields: [promotions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dinings_rels_promotions_fk")
+  shops                                    shops?      @relation(fields: [shops_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dinings_rels_shops_fk")
+
+  @@index([categories_id])
+  @@index([dinings_id])
+  @@index([order])
+  @@index([parent_id], map: "dinings_rels_parent_idx")
+  @@index([path])
+  @@index([promotions_id])
+  @@index([shops_id])
+}
+
+model dinings_tags {
+  order     Int     @map("_order")
+  parent_id Int     @map("_parent_id")
+  id        String  @id @db.VarChar
+  tag       String? @db.VarChar
+  dinings   dinings @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dinings_tags_parent_id_fk")
+
+  @@index([order], map: "dinings_tags_order_idx")
+  @@index([parent_id], map: "dinings_tags_parent_id_idx")
+}
+
+model directory {
+  id                            Int                             @id @default(autoincrement())
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  directory_icon_siam_picks     directory_icon_siam_picks[]
+  directory_rels                directory_rels[]
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model directory_icon_siam_picks {
+  order                             Int                                 @map("_order")
+  parent_id                         Int                                 @map("_parent_id")
+  id                                String                              @id @db.VarChar
+  custom_image_id                   Int?
+  media                             media?                              @relation(fields: [custom_image_id], references: [id], onUpdate: NoAction, map: "directory_icon_siam_picks_custom_image_id_media_id_fk")
+  directory                         directory                           @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "directory_icon_siam_picks_parent_id_fk")
+  directory_icon_siam_picks_locales directory_icon_siam_picks_locales[]
+
+  @@index([custom_image_id], map: "directory_icon_siam_picks_custom_image_idx")
+  @@index([order], map: "directory_icon_siam_picks_order_idx")
+  @@index([parent_id], map: "directory_icon_siam_picks_parent_id_idx")
+}
+
+model directory_icon_siam_picks_locales {
+  custom_title              String?                   @db.VarChar
+  id                        Int                       @id @default(autoincrement())
+  locale                    locales                   @map("_locale")
+  parent_id                 String                    @map("_parent_id") @db.VarChar
+  directory_icon_siam_picks directory_icon_siam_picks @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "directory_icon_siam_picks_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "directory_icon_siam_picks_locales_locale_parent_id_unique")
+}
+
+model directory_rels {
+  id             Int          @id @default(autoincrement())
+  order          Int?
+  parent_id      Int
+  path           String       @db.VarChar
+  shops_id       Int?
+  dinings_id     Int?
+  attractions_id Int?
+  icon_luxe_id   Int?
+  icon_craft_id  Int?
+  attractions    attractions? @relation(fields: [attractions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "directory_rels_attractions_fk")
+  dinings        dinings?     @relation(fields: [dinings_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "directory_rels_dinings_fk")
+  icon_craft     icon_craft?  @relation(fields: [icon_craft_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "directory_rels_icon_craft_fk")
+  icon_luxe      icon_luxe?   @relation(fields: [icon_luxe_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "directory_rels_icon_luxe_fk")
+  directory      directory    @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "directory_rels_parent_fk")
+  shops          shops?       @relation(fields: [shops_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "directory_rels_shops_fk")
+
+  @@index([attractions_id])
+  @@index([dinings_id])
+  @@index([icon_craft_id])
+  @@index([icon_luxe_id])
+  @@index([order])
+  @@index([parent_id], map: "directory_rels_parent_idx")
+  @@index([path])
+  @@index([shops_id])
+}
+
+model events {
+  id                            Int                             @id @default(autoincrement())
+  start_date                    DateTime                        @db.Timestamptz(3)
+  end_date                      DateTime                        @db.Timestamptz(3)
+  status                        enum_events_status              @default(ACTIVE)
+  location_name                 String?                         @db.VarChar
+  location_address              String?                         @db.VarChar
+  is_featured                   Boolean?                        @default(false)
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  slug                          String?                         @db.VarChar
+  slug_lock                     Boolean?                        @default(true)
+  highlight                     String?                         @db.VarChar
+  section_highlight             String?                         @db.VarChar
+  short_alphabet                String?                         @db.VarChar
+  show_time                     String?                         @db.VarChar
+  sort_order                    Decimal?                        @db.Decimal
+  location_floor_id             Int?
+  location_zone                 String?                         @db.VarChar
+  promotion_type                enum_events_promotion_type?
+  system_original_id            Decimal?                        @db.Decimal
+  system_cid                    Decimal?                        @db.Decimal
+  system_scid                   Decimal?                        @db.Decimal
+  system_create_by              String?                         @db.VarChar
+  system_modified_at            DateTime?                       @db.Timestamptz(3)
+  floors                        floors?                         @relation(fields: [location_floor_id], references: [id], onUpdate: NoAction, map: "events_location_floor_id_floors_id_fk")
+  events_keywords               events_keywords[]
+  events_locales                events_locales[]
+  events_rels                   events_rels[]
+  news_press_rels               news_press_rels[]
+  page_banners                  page_banners[]
+  payload_locked_documents_rels payload_locked_documents_rels[]
+  promotions_rels               promotions_rels[]
+  stories_rels                  stories_rels[]
+
+  @@index([created_at])
+  @@index([location_floor_id], map: "events_location_location_floor_idx")
+  @@index([slug])
+  @@index([updated_at])
+}
+
+model events_keywords {
+  order     Int     @map("_order")
+  parent_id Int     @map("_parent_id")
+  locale    locales @map("_locale")
+  id        String  @id @db.VarChar
+  keyword   String? @db.VarChar
+  events    events  @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "events_keywords_parent_id_fk")
+
+  @@index([locale], map: "events_keywords_locale_idx")
+  @@index([order], map: "events_keywords_order_idx")
+  @@index([parent_id], map: "events_keywords_parent_id_idx")
+}
+
+model events_locales {
+  title                                                String  @db.VarChar
+  subtitle                                             String? @db.VarChar
+  description                                          String? @db.VarChar
+  content                                              Json?
+  meta_title                                           String? @db.VarChar
+  meta_description                                     String? @db.VarChar
+  id                                                   Int     @id @default(autoincrement())
+  locale                                               locales @map("_locale")
+  parent_id                                            Int     @map("_parent_id")
+  meta_keywords                                        String? @db.VarChar
+  images_cover_photo_id                                Int?
+  images_thumbnail_id                                  Int?
+  images_facebook_image_id                             Int?
+  media_events_locales_images_cover_photo_idTomedia    media?  @relation("events_locales_images_cover_photo_idTomedia", fields: [images_cover_photo_id], references: [id], onUpdate: NoAction, map: "events_locales_images_cover_photo_id_media_id_fk")
+  media_events_locales_images_facebook_image_idTomedia media?  @relation("events_locales_images_facebook_image_idTomedia", fields: [images_facebook_image_id], references: [id], onUpdate: NoAction, map: "events_locales_images_facebook_image_id_media_id_fk")
+  media_events_locales_images_thumbnail_idTomedia      media?  @relation("events_locales_images_thumbnail_idTomedia", fields: [images_thumbnail_id], references: [id], onUpdate: NoAction, map: "events_locales_images_thumbnail_id_media_id_fk")
+  events                                               events  @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "events_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "events_locales_locale_parent_id_unique")
+  @@index([images_cover_photo_id, locale], map: "events_images_images_cover_photo_idx")
+  @@index([images_facebook_image_id, locale], map: "events_images_images_facebook_image_idx")
+  @@index([images_thumbnail_id, locale], map: "events_images_images_thumbnail_idx")
+}
+
+model events_rels {
+  id             Int          @id @default(autoincrement())
+  order          Int?
+  parent_id      Int
+  path           String       @db.VarChar
+  categories_id  Int?
+  dinings_id     Int?
+  shops_id       Int?
+  attractions_id Int?
+  promotions_id  Int?
+  attractions    attractions? @relation(fields: [attractions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "events_rels_attractions_fk")
+  categories     categories?  @relation(fields: [categories_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "events_rels_categories_fk")
+  dinings        dinings?     @relation(fields: [dinings_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "events_rels_dinings_fk")
+  events         events       @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "events_rels_parent_fk")
+  promotions     promotions?  @relation(fields: [promotions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "events_rels_promotions_fk")
+  shops          shops?       @relation(fields: [shops_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "events_rels_shops_fk")
+
+  @@index([attractions_id])
+  @@index([categories_id])
+  @@index([dinings_id])
+  @@index([order])
+  @@index([parent_id], map: "events_rels_parent_idx")
+  @@index([path])
+  @@index([promotions_id])
+  @@index([shops_id])
+}
+
+model floors {
+  id                            Int                             @id @default(autoincrement())
+  name                          String                          @db.VarChar
+  order                         Decimal                         @default(1) @db.Decimal
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  status                        enum_floors_status              @default(ACTIVE)
+  dinings                       dinings[]
+  events                        events[]
+  payload_locked_documents_rels payload_locked_documents_rels[]
+  shops                         shops[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model footers {
+  id                            Int                             @id @default(autoincrement())
+  name                          String?                         @db.VarChar
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  footers_awards                footers_awards[]
+  footers_connect_with_us       footers_connect_with_us[]
+  footers_locales               footers_locales[]
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model footers_awards {
+  order        Int     @map("_order")
+  parent_id    Int     @map("_parent_id")
+  id           String  @id @db.VarChar
+  image_url_id Int?
+  media        media?  @relation(fields: [image_url_id], references: [id], onUpdate: NoAction, map: "footers_awards_image_url_id_media_id_fk")
+  footers      footers @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "footers_awards_parent_id_fk")
+
+  @@index([image_url_id], map: "footers_awards_image_url_idx")
+  @@index([order], map: "footers_awards_order_idx")
+  @@index([parent_id], map: "footers_awards_parent_id_idx")
+}
+
+model footers_connect_with_us {
+  order         Int     @map("_order")
+  parent_id     Int     @map("_parent_id")
+  id            String  @id @db.VarChar
+  name          String? @db.VarChar
+  link          String? @db.VarChar
+  image_icon_id Int?
+  media         media?  @relation(fields: [image_icon_id], references: [id], onUpdate: NoAction, map: "footers_connect_with_us_image_icon_id_media_id_fk")
+  footers       footers @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "footers_connect_with_us_parent_id_fk")
+
+  @@index([image_icon_id], map: "footers_connect_with_us_image_icon_idx")
+  @@index([order], map: "footers_connect_with_us_order_idx")
+  @@index([parent_id], map: "footers_connect_with_us_parent_id_idx")
+}
+
+model footers_locales {
+  button_text String? @db.VarChar
+  button_link String? @db.VarChar
+  id          Int     @id @default(autoincrement())
+  locale      locales @map("_locale")
+  parent_id   Int     @map("_parent_id")
+  footers     footers @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "footers_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "footers_locales_locale_parent_id_unique")
+}
+
+model gallery_collections {
+  id                                     Int                                      @id @default(autoincrement())
+  placement_key                          enum_gallery_collections_placement_key   @unique(map: "gallery_collections_placement_key_idx")
+  updated_at                             DateTime                                 @default(now()) @db.Timestamptz(3)
+  created_at                             DateTime                                 @default(now()) @db.Timestamptz(3)
+  gallery_collections_gallery_image_urls gallery_collections_gallery_image_urls[]
+  gallery_collections_locales            gallery_collections_locales[]
+  payload_locked_documents_rels          payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model gallery_collections_gallery_image_urls {
+  order               Int                 @map("_order")
+  parent_id           Int                 @map("_parent_id")
+  id                  String              @id @db.VarChar
+  image_url_id        Int?
+  media               media?              @relation(fields: [image_url_id], references: [id], onUpdate: NoAction, map: "gallery_collections_gallery_image_urls_image_url_id_media_id_fk")
+  gallery_collections gallery_collections @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gallery_collections_gallery_image_urls_parent_id_fk")
+
+  @@index([image_url_id], map: "gallery_collections_gallery_image_urls_image_url_idx")
+  @@index([order], map: "gallery_collections_gallery_image_urls_order_idx")
+  @@index([parent_id], map: "gallery_collections_gallery_image_urls_parent_id_idx")
+}
+
+model gallery_collections_locales {
+  title               String?             @db.VarChar
+  description         String?             @db.VarChar
+  id                  Int                 @id @default(autoincrement())
+  locale              locales             @map("_locale")
+  parent_id           Int                 @map("_parent_id")
+  gallery_collections gallery_collections @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gallery_collections_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "gallery_collections_locales_locale_parent_id_unique")
+}
+
+model getting_here {
+  id                                 Int                                  @id @default(autoincrement())
+  custom_image_url_id                Int?
+  opening_hours_same_hours_every_day Boolean?                             @default(true)
+  opening_hours_open                 String?                              @db.VarChar
+  opening_hours_close                String?                              @db.VarChar
+  updated_at                         DateTime                             @default(now()) @db.Timestamptz(3)
+  created_at                         DateTime                             @default(now()) @db.Timestamptz(3)
+  google_map_url                     String?                              @db.VarChar
+  media                              media?                               @relation(fields: [custom_image_url_id], references: [id], onUpdate: NoAction, map: "getting_here_custom_image_url_id_media_id_fk")
+  getting_here_explore_icon_siam     getting_here_explore_icon_siam[]
+  getting_here_locales               getting_here_locales[]
+  getting_here_methods               getting_here_methods[]
+  getting_here_opening_hours_per_day getting_here_opening_hours_per_day[]
+  payload_locked_documents_rels      payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([custom_image_url_id], map: "getting_here_custom_image_url_idx")
+  @@index([updated_at])
+}
+
+model getting_here_explore_icon_siam {
+  order         Int                                               @map("_order")
+  parent_id     Int                                               @map("_parent_id")
+  id            String                                            @id @db.VarChar
+  placement_key enum_getting_here_explore_icon_siam_placement_key @unique(map: "getting_here_explore_icon_siam_placement_key_idx")
+  image_id      Int?
+  media         media?                                            @relation(fields: [image_id], references: [id], onUpdate: NoAction, map: "getting_here_explore_icon_siam_image_id_media_id_fk")
+  getting_here  getting_here                                      @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "getting_here_explore_icon_siam_parent_id_fk")
+
+  @@index([image_id], map: "getting_here_explore_icon_siam_image_idx")
+  @@index([order], map: "getting_here_explore_icon_siam_order_idx")
+  @@index([parent_id], map: "getting_here_explore_icon_siam_parent_id_idx")
+}
+
+model getting_here_locales {
+  title            String?      @default("Getting Here") @db.VarChar
+  location         String?      @db.VarChar
+  contact          String?      @db.VarChar
+  contact_info     String?      @db.VarChar
+  id               Int          @id @default(autoincrement())
+  locale           locales      @map("_locale")
+  parent_id        Int          @map("_parent_id")
+  google_map_title String?      @db.VarChar
+  getting_here     getting_here @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "getting_here_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "getting_here_locales_locale_parent_id_unique")
+}
+
+model getting_here_methods {
+  order                        Int                            @map("_order")
+  parent_id                    Int                            @map("_parent_id")
+  id                           String                         @id @db.VarChar
+  icon_id                      Int?
+  media                        media?                         @relation(fields: [icon_id], references: [id], onUpdate: NoAction, map: "getting_here_methods_icon_id_media_id_fk")
+  getting_here                 getting_here                   @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "getting_here_methods_parent_id_fk")
+  getting_here_methods_locales getting_here_methods_locales[]
+
+  @@index([icon_id], map: "getting_here_methods_icon_idx")
+  @@index([order], map: "getting_here_methods_order_idx")
+  @@index([parent_id], map: "getting_here_methods_parent_id_idx")
+}
+
+model getting_here_methods_locales {
+  type                 enum_getting_here_methods_type
+  title                String?                        @db.VarChar
+  details              Json?
+  id                   Int                            @id @default(autoincrement())
+  locale               locales                        @map("_locale")
+  parent_id            String                         @map("_parent_id") @db.VarChar
+  getting_here_methods getting_here_methods           @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "getting_here_methods_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "getting_here_methods_locales_locale_parent_id_unique")
+}
+
+model getting_here_opening_hours_per_day {
+  order        Int                                          @map("_order")
+  parent_id    Int                                          @map("_parent_id")
+  id           String                                       @id @db.VarChar
+  day          enum_getting_here_opening_hours_per_day_day?
+  open         String?                                      @db.VarChar
+  close        String?                                      @db.VarChar
+  getting_here getting_here                                 @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "getting_here_opening_hours_per_day_parent_id_fk")
+
+  @@index([order], map: "getting_here_opening_hours_per_day_order_idx")
+  @@index([parent_id], map: "getting_here_opening_hours_per_day_parent_id_idx")
+}
+
+model homepage {
+  id                                                           Int                               @id @default(autoincrement())
+  showcase_background_image_id                                 Int?
+  onesiam_member_image_id                                      Int?
+  onesiam_app_image_id                                         Int?
+  onesiam_app_call_to_action_android_link                      String?                           @db.VarChar
+  onesiam_app_call_to_action_ios_link                          String?                           @db.VarChar
+  status                                                       enum_homepage_status?
+  updated_at                                                   DateTime                          @default(now()) @db.Timestamptz(3)
+  created_at                                                   DateTime                          @default(now()) @db.Timestamptz(3)
+  onesiam_animation_text_runner                                String?                           @db.VarChar
+  onesiam_animation_text_runner_color                          String?                           @default("#ffffff") @db.VarChar
+  onesiam_app_background_image_id                              Int?
+  onesiam_app_background_image_mobile_id                       Int?
+  media_homepage_onesiam_app_background_image_idTomedia        media?                            @relation("homepage_onesiam_app_background_image_idTomedia", fields: [onesiam_app_background_image_id], references: [id], onUpdate: NoAction, map: "homepage_onesiam_app_background_image_id_media_id_fk")
+  media_homepage_onesiam_app_background_image_mobile_idTomedia media?                            @relation("homepage_onesiam_app_background_image_mobile_idTomedia", fields: [onesiam_app_background_image_mobile_id], references: [id], onUpdate: NoAction, map: "homepage_onesiam_app_background_image_mobile_id_media_id_fk")
+  media_homepage_onesiam_app_image_idTomedia                   media?                            @relation("homepage_onesiam_app_image_idTomedia", fields: [onesiam_app_image_id], references: [id], onUpdate: NoAction, map: "homepage_onesiam_app_image_id_media_id_fk")
+  media_homepage_onesiam_member_image_idTomedia                media?                            @relation("homepage_onesiam_member_image_idTomedia", fields: [onesiam_member_image_id], references: [id], onUpdate: NoAction, map: "homepage_onesiam_member_image_id_media_id_fk")
+  media_homepage_showcase_background_image_idTomedia           media?                            @relation("homepage_showcase_background_image_idTomedia", fields: [showcase_background_image_id], references: [id], onUpdate: NoAction, map: "homepage_showcase_background_image_id_media_id_fk")
+  homepage_dinings                                             homepage_dinings[]
+  homepage_extraordinary_shopping                              homepage_extraordinary_shopping[]
+  homepage_iconic_experience                                   homepage_iconic_experience[]
+  homepage_locales                                             homepage_locales[]
+  homepage_rels                                                homepage_rels[]
+  payload_locked_documents_rels                                payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([onesiam_app_background_image_id], map: "homepage_onesiam_app_background_image_idx")
+  @@index([onesiam_app_background_image_mobile_id], map: "homepage_onesiam_app_background_image_mobile_idx")
+  @@index([onesiam_app_image_id], map: "homepage_onesiam_app_image_idx")
+  @@index([onesiam_member_image_id], map: "homepage_onesiam_member_image_idx")
+  @@index([showcase_background_image_id], map: "homepage_showcase_background_image_idx")
+  @@index([updated_at])
+}
+
+model homepage_dinings {
+  order                    Int                        @map("_order")
+  parent_id                Int                        @map("_parent_id")
+  id                       String                     @id @db.VarChar
+  dining_id                Int?
+  custom_image_id          Int?
+  media                    media?                     @relation(fields: [custom_image_id], references: [id], onUpdate: NoAction, map: "homepage_dinings_custom_image_id_media_id_fk")
+  dinings                  dinings?                   @relation(fields: [dining_id], references: [id], onUpdate: NoAction, map: "homepage_dinings_dining_id_dinings_id_fk")
+  homepage                 homepage                   @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "homepage_dinings_parent_id_fk")
+  homepage_dinings_locales homepage_dinings_locales[]
+
+  @@index([custom_image_id], map: "homepage_dinings_custom_image_idx")
+  @@index([dining_id], map: "homepage_dinings_dining_idx")
+  @@index([order], map: "homepage_dinings_order_idx")
+  @@index([parent_id], map: "homepage_dinings_parent_id_idx")
+}
+
+model homepage_dinings_locales {
+  custom_title     String?          @db.VarChar
+  id               Int              @id @default(autoincrement())
+  locale           locales          @map("_locale")
+  parent_id        String           @map("_parent_id") @db.VarChar
+  homepage_dinings homepage_dinings @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "homepage_dinings_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "homepage_dinings_locales_locale_parent_id_unique")
+}
+
+model homepage_extraordinary_shopping {
+  order                                   Int                                       @map("_order")
+  parent_id                               Int                                       @map("_parent_id")
+  id                                      String                                    @id @db.VarChar
+  cover_image_id                          Int
+  path_to_page                            String                                    @db.VarChar
+  media                                   media                                     @relation(fields: [cover_image_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "homepage_extraordinary_shopping_cover_image_id_media_id_fk")
+  homepage                                homepage                                  @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "homepage_extraordinary_shopping_parent_id_fk")
+  homepage_extraordinary_shopping_locales homepage_extraordinary_shopping_locales[]
+
+  @@index([cover_image_id], map: "homepage_extraordinary_shopping_cover_image_idx")
+  @@index([order], map: "homepage_extraordinary_shopping_order_idx")
+  @@index([parent_id], map: "homepage_extraordinary_shopping_parent_id_idx")
+}
+
+model homepage_extraordinary_shopping_locales {
+  title                           String                          @db.VarChar
+  subtitle                        String                          @db.VarChar
+  id                              Int                             @id @default(autoincrement())
+  locale                          locales                         @map("_locale")
+  parent_id                       String                          @map("_parent_id") @db.VarChar
+  homepage_extraordinary_shopping homepage_extraordinary_shopping @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "homepage_extraordinary_shopping_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "homepage_extraordinary_shopping_locales_locale_parent_id_unique")
+}
+
+model homepage_iconic_experience {
+  order                              Int                                  @map("_order")
+  parent_id                          Int                                  @map("_parent_id")
+  id                                 String                               @id @db.VarChar
+  custom_image_id                    Int?
+  media                              media?                               @relation(fields: [custom_image_id], references: [id], onUpdate: NoAction, map: "homepage_iconic_experience_custom_image_id_media_id_fk")
+  homepage                           homepage                             @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "homepage_iconic_experience_parent_id_fk")
+  homepage_iconic_experience_locales homepage_iconic_experience_locales[]
+
+  @@index([custom_image_id], map: "homepage_iconic_experience_custom_image_idx")
+  @@index([order], map: "homepage_iconic_experience_order_idx")
+  @@index([parent_id], map: "homepage_iconic_experience_parent_id_idx")
+}
+
+model homepage_iconic_experience_locales {
+  custom_title               String?                    @db.VarChar
+  id                         Int                        @id @default(autoincrement())
+  locale                     locales                    @map("_locale")
+  parent_id                  String                     @map("_parent_id") @db.VarChar
+  homepage_iconic_experience homepage_iconic_experience @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "homepage_iconic_experience_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "homepage_iconic_experience_locales_locale_parent_id_unique")
+}
+
+model homepage_locales {
+  title                             String?  @db.VarChar
+  subtitle                          String?  @db.VarChar
+  description                       String?  @db.VarChar
+  custom_happening_title            String?  @db.VarChar
+  custom_happening_subtitle         String?  @db.VarChar
+  custom_iconic_experience_title    String?  @db.VarChar
+  custom_iconic_experience_subtitle String?  @db.VarChar
+  custom_dinings_title              String?  @db.VarChar
+  custom_dinings_subtitle           String?  @db.VarChar
+  showcase_title                    String?  @db.VarChar
+  showcase_description              String?  @db.VarChar
+  showcase_call_to_action           String?  @db.VarChar
+  showcase_link                     String?  @db.VarChar
+  onesiam_member_title              String?  @db.VarChar
+  onesiam_member_description        String?  @db.VarChar
+  onesiam_member_call_to_action     String?  @db.VarChar
+  onesiam_member_link               String?  @db.VarChar
+  onesiam_app_title                 String?  @db.VarChar
+  onesiam_app_description           String?  @db.VarChar
+  id                                Int      @id @default(autoincrement())
+  locale                            locales  @map("_locale")
+  parent_id                         Int      @map("_parent_id")
+  extraordinary_shopping_title      String?  @db.VarChar
+  extraordinary_shopping_subtitle   String?  @db.VarChar
+  homepage                          homepage @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "homepage_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "homepage_locales_locale_parent_id_unique")
+}
+
+model homepage_rels {
+  id             Int          @id @default(autoincrement())
+  order          Int?
+  parent_id      Int
+  path           String       @db.VarChar
+  dinings_id     Int?
+  shops_id       Int?
+  attractions_id Int?
+  attractions    attractions? @relation(fields: [attractions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "homepage_rels_attractions_fk")
+  dinings        dinings?     @relation(fields: [dinings_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "homepage_rels_dinings_fk")
+  homepage       homepage     @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "homepage_rels_parent_fk")
+  shops          shops?       @relation(fields: [shops_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "homepage_rels_shops_fk")
+
+  @@index([attractions_id])
+  @@index([dinings_id])
+  @@index([order])
+  @@index([parent_id], map: "homepage_rels_parent_idx")
+  @@index([path])
+  @@index([shops_id])
+}
+
+model icon_craft {
+  id                                 Int                                  @id @default(autoincrement())
+  main_image_url_id                  Int?
+  status                             enum_icon_craft_status               @default(ACTIVE)
+  is_featured                        Boolean?
+  updated_at                         DateTime                             @default(now()) @db.Timestamptz(3)
+  created_at                         DateTime                             @default(now()) @db.Timestamptz(3)
+  slug                               String                               @unique(map: "icon_craft_slug_idx") @db.VarChar
+  directory_rels                     directory_rels[]
+  media                              media?                               @relation(fields: [main_image_url_id], references: [id], onUpdate: NoAction, map: "icon_craft_main_image_url_id_media_id_fk")
+  icon_craft_content                 icon_craft_content[]
+  icon_craft_craft_highlight_content icon_craft_craft_highlight_content[]
+  icon_craft_gallery_image_urls      icon_craft_gallery_image_urls[]
+  icon_craft_keywords                icon_craft_keywords[]
+  icon_craft_locales                 icon_craft_locales[]
+  payload_locked_documents_rels      payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([main_image_url_id], map: "icon_craft_main_image_url_idx")
+  @@index([updated_at])
+}
+
+model icon_craft_content {
+  order                      Int                          @map("_order")
+  parent_id                  Int                          @map("_parent_id")
+  id                         String                       @id @db.VarChar
+  image_url_id               Int?
+  media                      media?                       @relation(fields: [image_url_id], references: [id], onUpdate: NoAction, map: "icon_craft_content_image_url_id_media_id_fk")
+  icon_craft                 icon_craft                   @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "icon_craft_content_parent_id_fk")
+  icon_craft_content_locales icon_craft_content_locales[]
+
+  @@index([image_url_id], map: "icon_craft_content_image_url_idx")
+  @@index([order], map: "icon_craft_content_order_idx")
+  @@index([parent_id], map: "icon_craft_content_parent_id_idx")
+}
+
+model icon_craft_content_locales {
+  title              String?            @db.VarChar
+  description        String?            @db.VarChar
+  id                 Int                @id @default(autoincrement())
+  locale             locales            @map("_locale")
+  parent_id          String             @map("_parent_id") @db.VarChar
+  icon_craft_content icon_craft_content @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "icon_craft_content_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "icon_craft_content_locales_locale_parent_id_unique")
+}
+
+model icon_craft_craft_highlight_content {
+  order                                      Int                                          @map("_order")
+  parent_id                                  Int                                          @map("_parent_id")
+  id                                         String                                       @id @db.VarChar
+  image_url_id                               Int?
+  media                                      media?                                       @relation(fields: [image_url_id], references: [id], onUpdate: NoAction, map: "icon_craft_craft_highlight_content_image_url_id_media_id_fk")
+  icon_craft                                 icon_craft                                   @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "icon_craft_craft_highlight_content_parent_id_fk")
+  icon_craft_craft_highlight_content_locales icon_craft_craft_highlight_content_locales[]
+
+  @@index([image_url_id], map: "icon_craft_craft_highlight_content_image_url_idx")
+  @@index([order], map: "icon_craft_craft_highlight_content_order_idx")
+  @@index([parent_id], map: "icon_craft_craft_highlight_content_parent_id_idx")
+}
+
+model icon_craft_craft_highlight_content_locales {
+  title                              String?                            @db.VarChar
+  id                                 Int                                @id @default(autoincrement())
+  locale                             locales                            @map("_locale")
+  parent_id                          String                             @map("_parent_id") @db.VarChar
+  icon_craft_craft_highlight_content icon_craft_craft_highlight_content @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "icon_craft_craft_highlight_content_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "icon_craft_craft_highlight_content_locales_locale_parent_id_uni")
+}
+
+model icon_craft_gallery_image_urls {
+  order        Int        @map("_order")
+  parent_id    Int        @map("_parent_id")
+  id           String     @id @db.VarChar
+  image_url_id Int?
+  media        media?     @relation(fields: [image_url_id], references: [id], onUpdate: NoAction, map: "icon_craft_gallery_image_urls_image_url_id_media_id_fk")
+  icon_craft   icon_craft @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "icon_craft_gallery_image_urls_parent_id_fk")
+
+  @@index([image_url_id], map: "icon_craft_gallery_image_urls_image_url_idx")
+  @@index([order], map: "icon_craft_gallery_image_urls_order_idx")
+  @@index([parent_id], map: "icon_craft_gallery_image_urls_parent_id_idx")
+}
+
+model icon_craft_keywords {
+  order      Int        @map("_order")
+  parent_id  Int        @map("_parent_id")
+  locale     locales    @map("_locale")
+  id         String     @id @db.VarChar
+  keyword    String?    @db.VarChar
+  icon_craft icon_craft @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "icon_craft_keywords_parent_id_fk")
+
+  @@index([locale], map: "icon_craft_keywords_locale_idx")
+  @@index([order], map: "icon_craft_keywords_order_idx")
+  @@index([parent_id], map: "icon_craft_keywords_parent_id_idx")
+}
+
+model icon_craft_locales {
+  title                       String?    @db.VarChar
+  subtitle                    String?    @db.VarChar
+  description                 String?    @db.VarChar
+  meta_title                  String?    @db.VarChar
+  meta_description            String?    @db.VarChar
+  id                          Int        @id @default(autoincrement())
+  locale                      locales    @map("_locale")
+  parent_id                   Int        @map("_parent_id")
+  craft_highlight_title       String?    @db.VarChar
+  craft_highlight_description String?    @db.VarChar
+  icon_craft                  icon_craft @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "icon_craft_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "icon_craft_locales_locale_parent_id_unique")
+}
+
+model icon_luxe {
+  id                                            Int                             @id @default(autoincrement())
+  main_image_url_id                             Int?
+  highlight_image_url_id                        Int?
+  status                                        enum_icon_luxe_status           @default(ACTIVE)
+  is_featured                                   Boolean?
+  updated_at                                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                                    DateTime                        @default(now()) @db.Timestamptz(3)
+  slug                                          String                          @unique(map: "icon_luxe_slug_idx") @db.VarChar
+  directory_rels                                directory_rels[]
+  media_icon_luxe_highlight_image_url_idTomedia media?                          @relation("icon_luxe_highlight_image_url_idTomedia", fields: [highlight_image_url_id], references: [id], onUpdate: NoAction, map: "icon_luxe_highlight_image_url_id_media_id_fk")
+  media_icon_luxe_main_image_url_idTomedia      media?                          @relation("icon_luxe_main_image_url_idTomedia", fields: [main_image_url_id], references: [id], onUpdate: NoAction, map: "icon_luxe_main_image_url_id_media_id_fk")
+  icon_luxe_gallery_image_urls                  icon_luxe_gallery_image_urls[]
+  icon_luxe_keywords                            icon_luxe_keywords[]
+  icon_luxe_locales                             icon_luxe_locales[]
+  payload_locked_documents_rels                 payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([highlight_image_url_id], map: "icon_luxe_highlight_image_url_idx")
+  @@index([main_image_url_id], map: "icon_luxe_main_image_url_idx")
+  @@index([updated_at])
+}
+
+model icon_luxe_gallery_image_urls {
+  order        Int       @map("_order")
+  parent_id    Int       @map("_parent_id")
+  id           String    @id @db.VarChar
+  image_url_id Int?
+  media        media?    @relation(fields: [image_url_id], references: [id], onUpdate: NoAction, map: "icon_luxe_gallery_image_urls_image_url_id_media_id_fk")
+  icon_luxe    icon_luxe @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "icon_luxe_gallery_image_urls_parent_id_fk")
+
+  @@index([image_url_id], map: "icon_luxe_gallery_image_urls_image_url_idx")
+  @@index([order], map: "icon_luxe_gallery_image_urls_order_idx")
+  @@index([parent_id], map: "icon_luxe_gallery_image_urls_parent_id_idx")
+}
+
+model icon_luxe_keywords {
+  order     Int       @map("_order")
+  parent_id Int       @map("_parent_id")
+  locale    locales   @map("_locale")
+  id        String    @id @db.VarChar
+  keyword   String?   @db.VarChar
+  icon_luxe icon_luxe @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "icon_luxe_keywords_parent_id_fk")
+
+  @@index([locale], map: "icon_luxe_keywords_locale_idx")
+  @@index([order], map: "icon_luxe_keywords_order_idx")
+  @@index([parent_id], map: "icon_luxe_keywords_parent_id_idx")
+}
+
+model icon_luxe_locales {
+  title                 String?   @db.VarChar
+  subtitle              String?   @db.VarChar
+  description           String?   @db.VarChar
+  highlight_title       String?   @db.VarChar
+  highlight_description String?   @db.VarChar
+  showcase_title        String?   @db.VarChar
+  showcase_description  String?   @db.VarChar
+  meta_title            String?   @db.VarChar
+  meta_description      String?   @db.VarChar
+  id                    Int       @id @default(autoincrement())
+  locale                locales   @map("_locale")
+  parent_id             Int       @map("_parent_id")
+  icon_luxe             icon_luxe @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "icon_luxe_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "icon_luxe_locales_locale_parent_id_unique")
+}
+
+model media {
+  id                                                                    Int                                        @id @default(autoincrement())
+  alt_en                                                                String?                                    @db.VarChar
+  alt_th                                                                String?                                    @db.VarChar
+  alt_zh                                                                String?                                    @db.VarChar
+  prefix                                                                String?                                    @default("media") @db.VarChar
+  updated_at                                                            DateTime                                   @default(now()) @db.Timestamptz(3)
+  created_at                                                            DateTime                                   @default(now()) @db.Timestamptz(3)
+  url                                                                   String?                                    @db.VarChar
+  thumbnail_u_r_l                                                       String?                                    @db.VarChar
+  filename                                                              String?                                    @unique(map: "media_filename_idx") @db.VarChar
+  mime_type                                                             String?                                    @db.VarChar
+  filesize                                                              Decimal?                                   @db.Decimal
+  width                                                                 Decimal?                                   @db.Decimal
+  height                                                                Decimal?                                   @db.Decimal
+  focal_x                                                               Decimal?                                   @db.Decimal
+  focal_y                                                               Decimal?                                   @db.Decimal
+  attractions_attractions_feature_image_url_idTomedia                   attractions[]                              @relation("attractions_feature_image_url_idTomedia")
+  attractions_attractions_gallery_main_image_url_idTomedia              attractions[]                              @relation("attractions_gallery_main_image_url_idTomedia")
+  attractions_attractions_main_image_url_idTomedia                      attractions[]                              @relation("attractions_main_image_url_idTomedia")
+  attractions_attractions_showcase_image_url_idTomedia                  attractions[]                              @relation("attractions_showcase_image_url_idTomedia")
+  attractions_gallery_image_urls                                        attractions_gallery_image_urls[]
+  attractions_highlight_image_url                                       attractions_highlight_image_url[]
+  categories                                                            categories[]
+  dinings_dinings_images_facebook_image_idTomedia                       dinings[]                                  @relation("dinings_images_facebook_image_idTomedia")
+  dinings_dinings_images_logo_idTomedia                                 dinings[]                                  @relation("dinings_images_logo_idTomedia")
+  dinings_dinings_images_main_image_idTomedia                           dinings[]                                  @relation("dinings_images_main_image_idTomedia")
+  dinings_dinings_images_thumbnail_idTomedia                            dinings[]                                  @relation("dinings_images_thumbnail_idTomedia")
+  dinings_images_gallery                                                dinings_images_gallery[]
+  directory_icon_siam_picks                                             directory_icon_siam_picks[]
+  events_locales_events_locales_images_cover_photo_idTomedia            events_locales[]                           @relation("events_locales_images_cover_photo_idTomedia")
+  events_locales_events_locales_images_facebook_image_idTomedia         events_locales[]                           @relation("events_locales_images_facebook_image_idTomedia")
+  events_locales_events_locales_images_thumbnail_idTomedia              events_locales[]                           @relation("events_locales_images_thumbnail_idTomedia")
+  footers_awards                                                        footers_awards[]
+  footers_connect_with_us                                               footers_connect_with_us[]
+  gallery_collections_gallery_image_urls                                gallery_collections_gallery_image_urls[]
+  getting_here                                                          getting_here[]
+  getting_here_explore_icon_siam                                        getting_here_explore_icon_siam[]
+  getting_here_methods                                                  getting_here_methods[]
+  homepage_homepage_onesiam_app_background_image_idTomedia              homepage[]                                 @relation("homepage_onesiam_app_background_image_idTomedia")
+  homepage_homepage_onesiam_app_background_image_mobile_idTomedia       homepage[]                                 @relation("homepage_onesiam_app_background_image_mobile_idTomedia")
+  homepage_homepage_onesiam_app_image_idTomedia                         homepage[]                                 @relation("homepage_onesiam_app_image_idTomedia")
+  homepage_homepage_onesiam_member_image_idTomedia                      homepage[]                                 @relation("homepage_onesiam_member_image_idTomedia")
+  homepage_homepage_showcase_background_image_idTomedia                 homepage[]                                 @relation("homepage_showcase_background_image_idTomedia")
+  homepage_dinings                                                      homepage_dinings[]
+  homepage_extraordinary_shopping                                       homepage_extraordinary_shopping[]
+  homepage_iconic_experience                                            homepage_iconic_experience[]
+  icon_craft                                                            icon_craft[]
+  icon_craft_content                                                    icon_craft_content[]
+  icon_craft_craft_highlight_content                                    icon_craft_craft_highlight_content[]
+  icon_craft_gallery_image_urls                                         icon_craft_gallery_image_urls[]
+  icon_luxe_icon_luxe_highlight_image_url_idTomedia                     icon_luxe[]                                @relation("icon_luxe_highlight_image_url_idTomedia")
+  icon_luxe_icon_luxe_main_image_url_idTomedia                          icon_luxe[]                                @relation("icon_luxe_main_image_url_idTomedia")
+  icon_luxe_gallery_image_urls                                          icon_luxe_gallery_image_urls[]
+  news_press_locales_news_press_locales_images_cover_photo_idTomedia    news_press_locales[]                       @relation("news_press_locales_images_cover_photo_idTomedia")
+  news_press_locales_news_press_locales_images_facebook_image_idTomedia news_press_locales[]                       @relation("news_press_locales_images_facebook_image_idTomedia")
+  news_press_locales_news_press_locales_images_thumbnail_idTomedia      news_press_locales[]                       @relation("news_press_locales_images_thumbnail_idTomedia")
+  page_banners                                                          page_banners[]
+  page_banners_custom_banner_images                                     page_banners_custom_banner_images[]
+  page_banners_custom_mobile_banner_images                              page_banners_custom_mobile_banner_images[]
+  payload_locked_documents_rels                                         payload_locked_documents_rels[]
+  promotions_promotions_images_cover_photo_idTomedia                    promotions[]                               @relation("promotions_images_cover_photo_idTomedia")
+  promotions_promotions_images_facebook_image_idTomedia                 promotions[]                               @relation("promotions_images_facebook_image_idTomedia")
+  promotions_promotions_images_thumbnail_idTomedia                      promotions[]                               @relation("promotions_images_thumbnail_idTomedia")
+  shops_shops_images_facebook_image_idTomedia                           shops[]                                    @relation("shops_images_facebook_image_idTomedia")
+  shops_shops_images_logo_idTomedia                                     shops[]                                    @relation("shops_images_logo_idTomedia")
+  shops_shops_images_main_image_idTomedia                               shops[]                                    @relation("shops_images_main_image_idTomedia")
+  shops_shops_images_thumbnail_idTomedia                                shops[]                                    @relation("shops_images_thumbnail_idTomedia")
+  shops_images_gallery                                                  shops_images_gallery[]
+  stickbar_locales                                                      stickbar_locales[]
+  stories_locales_stories_locales_images_cover_photo_idTomedia          stories_locales[]                          @relation("stories_locales_images_cover_photo_idTomedia")
+  stories_locales_stories_locales_images_facebook_image_idTomedia       stories_locales[]                          @relation("stories_locales_images_facebook_image_idTomedia")
+  stories_locales_stories_locales_images_thumbnail_idTomedia            stories_locales[]                          @relation("stories_locales_images_thumbnail_idTomedia")
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model news_press {
+  id                            Int                             @id @default(autoincrement())
+  highlight                     String?                         @db.VarChar
+  section_highlight             String?                         @db.VarChar
+  short_alphabet                String?                         @db.VarChar
+  start_date                    DateTime                        @db.Timestamptz(3)
+  end_date                      DateTime                        @db.Timestamptz(3)
+  show_time                     String?                         @db.VarChar
+  status                        enum_news_press_status          @default(ACTIVE)
+  pin_to_home                   Boolean?                        @default(false)
+  pin_to_section                Boolean?                        @default(false)
+  sort_order                    Decimal?                        @db.Decimal
+  slug                          String?                         @db.VarChar
+  slug_lock                     Boolean?                        @default(true)
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  news_press_locales            news_press_locales[]
+  news_press_rels               news_press_rels[]
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([slug])
+  @@index([updated_at])
+}
+
+model news_press_locales {
+  title                                                    String     @db.VarChar
+  subtitle                                                 String?    @db.VarChar
+  content                                                  Json?
+  seo_keywords                                             String?    @db.VarChar
+  seo_description                                          String?    @db.VarChar
+  images_cover_photo_id                                    Int?
+  images_thumbnail_id                                      Int?
+  images_facebook_image_id                                 Int?
+  id                                                       Int        @id @default(autoincrement())
+  locale                                                   locales    @map("_locale")
+  parent_id                                                Int        @map("_parent_id")
+  media_news_press_locales_images_cover_photo_idTomedia    media?     @relation("news_press_locales_images_cover_photo_idTomedia", fields: [images_cover_photo_id], references: [id], onUpdate: NoAction, map: "news_press_locales_images_cover_photo_id_media_id_fk")
+  media_news_press_locales_images_facebook_image_idTomedia media?     @relation("news_press_locales_images_facebook_image_idTomedia", fields: [images_facebook_image_id], references: [id], onUpdate: NoAction, map: "news_press_locales_images_facebook_image_id_media_id_fk")
+  media_news_press_locales_images_thumbnail_idTomedia      media?     @relation("news_press_locales_images_thumbnail_idTomedia", fields: [images_thumbnail_id], references: [id], onUpdate: NoAction, map: "news_press_locales_images_thumbnail_id_media_id_fk")
+  news_press                                               news_press @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "news_press_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "news_press_locales_locale_parent_id_unique")
+  @@index([images_cover_photo_id, locale], map: "news_press_images_images_cover_photo_idx")
+  @@index([images_facebook_image_id, locale], map: "news_press_images_images_facebook_image_idx")
+  @@index([images_thumbnail_id, locale], map: "news_press_images_images_thumbnail_idx")
+}
+
+model news_press_rels {
+  id             Int          @id @default(autoincrement())
+  order          Int?
+  parent_id      Int
+  path           String       @db.VarChar
+  categories_id  Int?
+  dinings_id     Int?
+  shops_id       Int?
+  attractions_id Int?
+  events_id      Int?
+  promotions_id  Int?
+  attractions    attractions? @relation(fields: [attractions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "news_press_rels_attractions_fk")
+  categories     categories?  @relation(fields: [categories_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "news_press_rels_categories_fk")
+  dinings        dinings?     @relation(fields: [dinings_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "news_press_rels_dinings_fk")
+  events         events?      @relation(fields: [events_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "news_press_rels_events_fk")
+  news_press     news_press   @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "news_press_rels_parent_fk")
+  promotions     promotions?  @relation(fields: [promotions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "news_press_rels_promotions_fk")
+  shops          shops?       @relation(fields: [shops_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "news_press_rels_shops_fk")
+
+  @@index([attractions_id])
+  @@index([categories_id])
+  @@index([dinings_id])
+  @@index([events_id])
+  @@index([order])
+  @@index([parent_id], map: "news_press_rels_parent_idx")
+  @@index([path])
+  @@index([promotions_id])
+  @@index([shops_id])
+}
+
+model page_banners {
+  id                                       Int                                        @id @default(autoincrement())
+  placement_key                            enum_page_banners_placement_key            @unique(map: "page_banners_placement_key_idx")
+  display_order                            Decimal?                                   @default(0) @db.Decimal
+  linked_event_id                          Int?
+  custom_image_url_id                      Int?
+  updated_at                               DateTime                                   @default(now()) @db.Timestamptz(3)
+  created_at                               DateTime                                   @default(now()) @db.Timestamptz(3)
+  status                                   enum_page_banners_status?                  @default(ACTIVE)
+  media                                    media?                                     @relation(fields: [custom_image_url_id], references: [id], onUpdate: NoAction, map: "page_banners_custom_image_url_id_media_id_fk")
+  events                                   events?                                    @relation(fields: [linked_event_id], references: [id], onUpdate: NoAction, map: "page_banners_linked_event_id_events_id_fk")
+  page_banners_custom_banner_images        page_banners_custom_banner_images[]
+  page_banners_custom_mobile_banner_images page_banners_custom_mobile_banner_images[]
+  page_banners_locales                     page_banners_locales[]
+  payload_locked_documents_rels            payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([custom_image_url_id], map: "page_banners_custom_image_url_idx")
+  @@index([linked_event_id], map: "page_banners_linked_event_idx")
+  @@index([updated_at])
+}
+
+model page_banners_custom_banner_images {
+  order           Int          @map("_order")
+  parent_id       Int          @map("_parent_id")
+  locale          locales      @map("_locale")
+  id              String       @id @db.VarChar
+  banner_image_id Int?
+  media           media?       @relation(fields: [banner_image_id], references: [id], onUpdate: NoAction, map: "page_banners_custom_banner_images_banner_image_id_media_id_fk")
+  page_banners    page_banners @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "page_banners_custom_banner_images_parent_id_fk")
+
+  @@index([banner_image_id], map: "page_banners_custom_banner_images_banner_image_idx")
+  @@index([locale], map: "page_banners_custom_banner_images_locale_idx")
+  @@index([order], map: "page_banners_custom_banner_images_order_idx")
+  @@index([parent_id], map: "page_banners_custom_banner_images_parent_id_idx")
+}
+
+model page_banners_custom_mobile_banner_images {
+  order                  Int          @map("_order")
+  parent_id              Int          @map("_parent_id")
+  locale                 locales      @map("_locale")
+  id                     String       @id @db.VarChar
+  mobile_banner_image_id Int?
+  media                  media?       @relation(fields: [mobile_banner_image_id], references: [id], onUpdate: NoAction)
+  page_banners           page_banners @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "page_banners_custom_mobile_banner_images_parent_id_fk")
+
+  @@index([locale], map: "page_banners_custom_mobile_banner_images_locale_idx")
+  @@index([mobile_banner_image_id], map: "page_banners_custom_mobile_banner_images_mobile_banner_image_id")
+  @@index([order], map: "page_banners_custom_mobile_banner_images_order_idx")
+  @@index([parent_id], map: "page_banners_custom_mobile_banner_images_parent_id_idx")
+}
+
+model page_banners_locales {
+  custom_title                   String?      @db.VarChar
+  custom_subtitle                String?      @db.VarChar
+  first_section_title            String?      @db.VarChar
+  first_section_subtitle         String?      @db.VarChar
+  custom_image_alt_text          String?      @db.VarChar
+  call_to_action_text            String?      @db.VarChar
+  target_url                     String?      @db.VarChar
+  id                             Int          @id @default(autoincrement())
+  locale                         locales      @map("_locale")
+  parent_id                      Int          @map("_parent_id")
+  custom_banner_section_title    String?      @db.VarChar
+  custom_banner_section_subtitle String?      @db.VarChar
+  page_banners                   page_banners @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "page_banners_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "page_banners_locales_locale_parent_id_unique")
+}
+
+model payload_locked_documents {
+  id                            Int                             @id @default(autoincrement())
+  global_slug                   String?                         @db.VarChar
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([global_slug])
+  @@index([updated_at])
+}
+
+model payload_locked_documents_rels {
+  id                       Int                      @id @default(autoincrement())
+  order                    Int?
+  parent_id                Int
+  path                     String                   @db.VarChar
+  homepage_id              Int?
+  page_banners_id          Int?
+  events_id                Int?
+  shops_id                 Int?
+  dinings_id               Int?
+  attractions_id           Int?
+  icon_craft_id            Int?
+  icon_luxe_id             Int?
+  getting_here_id          Int?
+  directory_id             Int?
+  floors_id                Int?
+  users_id                 Int?
+  media_id                 Int?
+  categories_id            Int?
+  gallery_collections_id   Int?
+  promotions_id            Int?
+  footers_id               Int?
+  stickbar_id              Int?
+  news_press_id            Int?
+  stories_id               Int?
+  api_sync_logs_id         Int?
+  api_sync_logs            api_sync_logs?           @relation(fields: [api_sync_logs_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_api_sync_logs_fk")
+  attractions              attractions?             @relation(fields: [attractions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_attractions_fk")
+  categories               categories?              @relation(fields: [categories_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_categories_fk")
+  dinings                  dinings?                 @relation(fields: [dinings_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_dinings_fk")
+  directory                directory?               @relation(fields: [directory_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_directory_fk")
+  events                   events?                  @relation(fields: [events_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_events_fk")
+  floors                   floors?                  @relation(fields: [floors_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_floors_fk")
+  footers                  footers?                 @relation(fields: [footers_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_footers_fk")
+  gallery_collections      gallery_collections?     @relation(fields: [gallery_collections_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_gallery_collections_fk")
+  getting_here             getting_here?            @relation(fields: [getting_here_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_getting_here_fk")
+  homepage                 homepage?                @relation(fields: [homepage_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_homepage_fk")
+  icon_craft               icon_craft?              @relation(fields: [icon_craft_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_icon_craft_fk")
+  icon_luxe                icon_luxe?               @relation(fields: [icon_luxe_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_icon_luxe_fk")
+  media                    media?                   @relation(fields: [media_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_media_fk")
+  news_press               news_press?              @relation(fields: [news_press_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_news_press_fk")
+  page_banners             page_banners?            @relation(fields: [page_banners_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_page_banners_fk")
+  payload_locked_documents payload_locked_documents @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_parent_fk")
+  promotions               promotions?              @relation(fields: [promotions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_promotions_fk")
+  shops                    shops?                   @relation(fields: [shops_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_shops_fk")
+  stickbar                 stickbar?                @relation(fields: [stickbar_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_stickbar_fk")
+  stories                  stories?                 @relation(fields: [stories_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_stories_fk")
+  users                    users?                   @relation(fields: [users_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_users_fk")
+
+  @@index([api_sync_logs_id])
+  @@index([attractions_id])
+  @@index([categories_id])
+  @@index([dinings_id])
+  @@index([directory_id])
+  @@index([events_id])
+  @@index([floors_id])
+  @@index([footers_id])
+  @@index([gallery_collections_id])
+  @@index([getting_here_id])
+  @@index([homepage_id])
+  @@index([icon_craft_id])
+  @@index([icon_luxe_id])
+  @@index([media_id])
+  @@index([news_press_id])
+  @@index([order])
+  @@index([page_banners_id])
+  @@index([parent_id], map: "payload_locked_documents_rels_parent_idx")
+  @@index([path])
+  @@index([promotions_id])
+  @@index([shops_id])
+  @@index([stickbar_id])
+  @@index([stories_id])
+  @@index([users_id])
+}
+
+model payload_migrations {
+  id         Int      @id @default(autoincrement())
+  name       String?  @db.VarChar
+  batch      Decimal? @db.Decimal
+  updated_at DateTime @default(now()) @db.Timestamptz(3)
+  created_at DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model payload_preferences {
+  id                       Int                        @id @default(autoincrement())
+  key                      String?                    @db.VarChar
+  value                    Json?
+  updated_at               DateTime                   @default(now()) @db.Timestamptz(3)
+  created_at               DateTime                   @default(now()) @db.Timestamptz(3)
+  payload_preferences_rels payload_preferences_rels[]
+
+  @@index([created_at])
+  @@index([key])
+  @@index([updated_at])
+}
+
+model payload_preferences_rels {
+  id                  Int                 @id @default(autoincrement())
+  order               Int?
+  parent_id           Int
+  path                String              @db.VarChar
+  users_id            Int?
+  payload_preferences payload_preferences @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_preferences_rels_parent_fk")
+  users               users?              @relation(fields: [users_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_preferences_rels_users_fk")
+
+  @@index([order])
+  @@index([parent_id], map: "payload_preferences_rels_parent_idx")
+  @@index([path])
+  @@index([users_id])
+}
+
+model promotions {
+  id                                               Int                             @id @default(autoincrement())
+  start_date                                       DateTime                        @db.Timestamptz(3)
+  end_date                                         DateTime                        @db.Timestamptz(3)
+  status                                           enum_promotions_status          @default(ACTIVE)
+  updated_at                                       DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                                       DateTime                        @default(now()) @db.Timestamptz(3)
+  slug                                             String?                         @db.VarChar
+  slug_lock                                        Boolean?                        @default(true)
+  highlight                                        String?                         @db.VarChar
+  section_highlight                                String?                         @db.VarChar
+  short_alphabet                                   String?                         @db.VarChar
+  show_time                                        String?                         @db.VarChar
+  pin_to_home                                      Boolean?                        @default(false)
+  pin_to_section                                   Boolean?                        @default(false)
+  sort_order                                       Decimal?                        @db.Decimal
+  images_cover_photo_id                            Int?
+  images_thumbnail_id                              Int?
+  images_facebook_image_id                         Int?
+  promotion_type                                   String?                         @db.VarChar
+  system_original_id                               Decimal?                        @db.Decimal
+  system_cid                                       String?                         @db.VarChar
+  system_scid                                      String?                         @db.VarChar
+  system_create_by                                 String?                         @db.VarChar
+  system_modified_at                               DateTime?                       @db.Timestamptz(3)
+  dinings_rels                                     dinings_rels[]
+  events_rels                                      events_rels[]
+  news_press_rels                                  news_press_rels[]
+  payload_locked_documents_rels                    payload_locked_documents_rels[]
+  media_promotions_images_cover_photo_idTomedia    media?                          @relation("promotions_images_cover_photo_idTomedia", fields: [images_cover_photo_id], references: [id], onUpdate: NoAction, map: "promotions_images_cover_photo_id_media_id_fk")
+  media_promotions_images_facebook_image_idTomedia media?                          @relation("promotions_images_facebook_image_idTomedia", fields: [images_facebook_image_id], references: [id], onUpdate: NoAction, map: "promotions_images_facebook_image_id_media_id_fk")
+  media_promotions_images_thumbnail_idTomedia      media?                          @relation("promotions_images_thumbnail_idTomedia", fields: [images_thumbnail_id], references: [id], onUpdate: NoAction, map: "promotions_images_thumbnail_id_media_id_fk")
+  promotions_keywords                              promotions_keywords[]
+  promotions_locales                               promotions_locales[]
+  promotions_rels                                  promotions_rels[]
+  shops_rels                                       shops_rels[]
+  stories_rels                                     stories_rels[]
+
+  @@index([created_at])
+  @@index([images_cover_photo_id], map: "promotions_images_images_cover_photo_idx")
+  @@index([images_facebook_image_id], map: "promotions_images_images_facebook_image_idx")
+  @@index([images_thumbnail_id], map: "promotions_images_images_thumbnail_idx")
+  @@index([slug])
+  @@index([updated_at])
+}
+
+model promotions_keywords {
+  order      Int        @map("_order")
+  parent_id  Int        @map("_parent_id")
+  locale     locales    @map("_locale")
+  id         String     @id @db.VarChar
+  keyword    String?    @db.VarChar
+  promotions promotions @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "promotions_keywords_parent_id_fk")
+
+  @@index([locale], map: "promotions_keywords_locale_idx")
+  @@index([order], map: "promotions_keywords_order_idx")
+  @@index([parent_id], map: "promotions_keywords_parent_id_idx")
+}
+
+model promotions_locales {
+  title            String     @db.VarChar
+  subtitle         String?    @db.VarChar
+  description      String?    @db.VarChar
+  content          Json?
+  meta_title       String?    @db.VarChar
+  meta_description String?    @db.VarChar
+  id               Int        @id @default(autoincrement())
+  locale           locales    @map("_locale")
+  parent_id        Int        @map("_parent_id")
+  meta_keywords    String?    @db.VarChar
+  promotions       promotions @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "promotions_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "promotions_locales_locale_parent_id_unique")
+}
+
+model promotions_rels {
+  id             Int          @id @default(autoincrement())
+  order          Int?
+  parent_id      Int
+  path           String       @db.VarChar
+  categories_id  Int?
+  dinings_id     Int?
+  shops_id       Int?
+  attractions_id Int?
+  events_id      Int?
+  attractions    attractions? @relation(fields: [attractions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "promotions_rels_attractions_fk")
+  categories     categories?  @relation(fields: [categories_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "promotions_rels_categories_fk")
+  dinings        dinings?     @relation(fields: [dinings_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "promotions_rels_dinings_fk")
+  events         events?      @relation(fields: [events_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "promotions_rels_events_fk")
+  promotions     promotions   @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "promotions_rels_parent_fk")
+  shops          shops?       @relation(fields: [shops_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "promotions_rels_shops_fk")
+
+  @@index([attractions_id])
+  @@index([categories_id])
+  @@index([dinings_id])
+  @@index([events_id])
+  @@index([order])
+  @@index([parent_id], map: "promotions_rels_parent_idx")
+  @@index([path])
+  @@index([shops_id])
+}
+
+model shops {
+  id                                          Int                             @id @default(autoincrement())
+  floor_id                                    Int?
+  location_zone                               String?                         @db.VarChar
+  opening_hours_same_hours_every_day          Boolean?                        @default(true)
+  opening_hours_open                          String?                         @db.VarChar
+  opening_hours_close                         String?                         @db.VarChar
+  status                                      enum_shops_status               @default(ACTIVE)
+  is_featured                                 Boolean?
+  updated_at                                  DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                                  DateTime                        @default(now()) @db.Timestamptz(3)
+  slug                                        String?                         @db.VarChar
+  slug_lock                                   Boolean?                        @default(true)
+  location_coordinates_poi_x                  Decimal?                        @default(0) @db.Decimal
+  location_coordinates_poi_y                  Decimal?                        @default(0) @db.Decimal
+  contact_info_website                        String?                         @db.VarChar
+  contact_info_phone                          String?                         @db.VarChar
+  contact_info_instagram_url                  String?                         @db.VarChar
+  contact_info_facebook_url                   String?                         @db.VarChar
+  contact_info_wechat_account                 String?                         @db.VarChar
+  contact_info_line_account                   String?                         @db.VarChar
+  contact_info_weibo_url                      String?                         @db.VarChar
+  images_logo_id                              Int?
+  images_main_image_id                        Int?
+  images_thumbnail_id                         Int?
+  images_facebook_image_id                    Int?
+  date_range_start_date                       DateTime?                       @db.Timestamptz(3)
+  date_range_end_date                         DateTime?                       @db.Timestamptz(3)
+  short_alphabet                              String?                         @db.VarChar
+  sort_order                                  Decimal?                        @db.Decimal
+  unique_id                                   String?                         @db.VarChar
+  pin_to_iconluxe                             Boolean?                        @default(false)
+  dinings_rels                                dinings_rels[]
+  directory_rels                              directory_rels[]
+  events_rels                                 events_rels[]
+  homepage_rels                               homepage_rels[]
+  news_press_rels                             news_press_rels[]
+  payload_locked_documents_rels               payload_locked_documents_rels[]
+  promotions_rels                             promotions_rels[]
+  floors                                      floors?                         @relation(fields: [floor_id], references: [id], onUpdate: NoAction, map: "shops_floor_id_floors_id_fk")
+  media_shops_images_facebook_image_idTomedia media?                          @relation("shops_images_facebook_image_idTomedia", fields: [images_facebook_image_id], references: [id], onUpdate: NoAction, map: "shops_images_facebook_image_id_media_id_fk")
+  media_shops_images_logo_idTomedia           media?                          @relation("shops_images_logo_idTomedia", fields: [images_logo_id], references: [id], onUpdate: NoAction, map: "shops_images_logo_id_media_id_fk")
+  media_shops_images_main_image_idTomedia     media?                          @relation("shops_images_main_image_idTomedia", fields: [images_main_image_id], references: [id], onUpdate: NoAction, map: "shops_images_main_image_id_media_id_fk")
+  media_shops_images_thumbnail_idTomedia      media?                          @relation("shops_images_thumbnail_idTomedia", fields: [images_thumbnail_id], references: [id], onUpdate: NoAction, map: "shops_images_thumbnail_id_media_id_fk")
+  shops_images_gallery                        shops_images_gallery[]
+  shops_keywords                              shops_keywords[]
+  shops_locales                               shops_locales[]
+  shops_opening_hours_per_day                 shops_opening_hours_per_day[]
+  shops_rels_shops_rels_parent_idToshops      shops_rels[]                    @relation("shops_rels_parent_idToshops")
+  shops_rels_shops_rels_shops_idToshops       shops_rels[]                    @relation("shops_rels_shops_idToshops")
+  shops_tags                                  shops_tags[]
+  stories_rels                                stories_rels[]
+
+  @@index([created_at])
+  @@index([floor_id], map: "shops_floor_idx")
+  @@index([images_facebook_image_id], map: "shops_images_images_facebook_image_idx")
+  @@index([images_logo_id], map: "shops_images_images_logo_idx")
+  @@index([images_main_image_id], map: "shops_images_images_main_image_idx")
+  @@index([images_thumbnail_id], map: "shops_images_images_thumbnail_idx")
+  @@index([slug])
+  @@index([updated_at])
+}
+
+model shops_images_gallery {
+  order     Int    @map("_order")
+  parent_id Int    @map("_parent_id")
+  id        String @id @db.VarChar
+  image_id  Int?
+  media     media? @relation(fields: [image_id], references: [id], onUpdate: NoAction, map: "shops_images_gallery_image_id_media_id_fk")
+  shops     shops  @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shops_images_gallery_parent_id_fk")
+
+  @@index([image_id], map: "shops_images_gallery_image_idx")
+  @@index([order], map: "shops_images_gallery_order_idx")
+  @@index([parent_id], map: "shops_images_gallery_parent_id_idx")
+}
+
+model shops_keywords {
+  order     Int     @map("_order")
+  parent_id Int     @map("_parent_id")
+  locale    locales @map("_locale")
+  id        String  @id @db.VarChar
+  keyword   String? @db.VarChar
+  shops     shops   @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shops_keywords_parent_id_fk")
+
+  @@index([locale], map: "shops_keywords_locale_idx")
+  @@index([order], map: "shops_keywords_order_idx")
+  @@index([parent_id], map: "shops_keywords_parent_id_idx")
+}
+
+model shops_locales {
+  title                String? @db.VarChar
+  subtitle             String? @db.VarChar
+  description          String? @db.VarChar
+  location_shop_number String? @db.VarChar
+  meta_title           String? @db.VarChar
+  meta_description     String? @db.VarChar
+  id                   Int     @id @default(autoincrement())
+  locale               locales @map("_locale")
+  parent_id            Int     @map("_parent_id")
+  shops                shops   @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shops_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "shops_locales_locale_parent_id_unique")
+}
+
+model shops_opening_hours_per_day {
+  order     Int                                   @map("_order")
+  parent_id Int                                   @map("_parent_id")
+  id        String                                @id @db.VarChar
+  day       enum_shops_opening_hours_per_day_day?
+  open      String?                               @db.VarChar
+  close     String?                               @db.VarChar
+  shops     shops                                 @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shops_opening_hours_per_day_parent_id_fk")
+
+  @@index([order], map: "shops_opening_hours_per_day_order_idx")
+  @@index([parent_id], map: "shops_opening_hours_per_day_parent_id_idx")
+}
+
+model shops_rels {
+  id                                Int         @id @default(autoincrement())
+  order                             Int?
+  parent_id                         Int
+  path                              String      @db.VarChar
+  categories_id                     Int?
+  dinings_id                        Int?
+  shops_id                          Int?
+  promotions_id                     Int?
+  categories                        categories? @relation(fields: [categories_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shops_rels_categories_fk")
+  dinings                           dinings?    @relation(fields: [dinings_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shops_rels_dinings_fk")
+  shops_shops_rels_parent_idToshops shops       @relation("shops_rels_parent_idToshops", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shops_rels_parent_fk")
+  promotions                        promotions? @relation(fields: [promotions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shops_rels_promotions_fk")
+  shops_shops_rels_shops_idToshops  shops?      @relation("shops_rels_shops_idToshops", fields: [shops_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shops_rels_shops_fk")
+
+  @@index([categories_id])
+  @@index([dinings_id])
+  @@index([order])
+  @@index([parent_id], map: "shops_rels_parent_idx")
+  @@index([path])
+  @@index([promotions_id])
+  @@index([shops_id])
+}
+
+model shops_tags {
+  order     Int     @map("_order")
+  parent_id Int     @map("_parent_id")
+  id        String  @id @db.VarChar
+  tag       String? @db.VarChar
+  shops     shops   @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shops_tags_parent_id_fk")
+
+  @@index([order], map: "shops_tags_order_idx")
+  @@index([parent_id], map: "shops_tags_parent_id_idx")
+}
+
+model stickbar {
+  id                            Int                             @id @default(autoincrement())
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  background_color              String?                         @default("#987b2c") @db.VarChar
+  payload_locked_documents_rels payload_locked_documents_rels[]
+  stickbar_locales              stickbar_locales[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model stickbar_locales {
+  title     String?               @db.VarChar
+  icon_id   Int?
+  link      String?               @db.VarChar
+  status    enum_stickbar_status? @default(active)
+  id        Int                   @id @default(autoincrement())
+  locale    locales               @map("_locale")
+  parent_id Int                   @map("_parent_id")
+  media     media?                @relation(fields: [icon_id], references: [id], onUpdate: NoAction, map: "stickbar_locales_icon_id_media_id_fk")
+  stickbar  stickbar              @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stickbar_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "stickbar_locales_locale_parent_id_unique")
+  @@index([icon_id, locale], map: "stickbar_icon_idx")
+}
+
+model stories {
+  id                            Int                             @id @default(autoincrement())
+  highlight                     String?                         @db.VarChar
+  section_highlight             String?                         @db.VarChar
+  short_alphabet                String?                         @db.VarChar
+  start_date                    DateTime                        @db.Timestamptz(3)
+  end_date                      DateTime                        @db.Timestamptz(3)
+  show_time                     String?                         @db.VarChar
+  status                        enum_stories_status             @default(ACTIVE)
+  pin_to_home                   Boolean?                        @default(false)
+  pin_to_section                Boolean?                        @default(false)
+  sort_order                    Decimal?                        @db.Decimal
+  system_original_id            Decimal?                        @db.Decimal
+  system_cid                    String?                         @db.VarChar
+  system_scid                   String?                         @db.VarChar
+  system_create_by              String?                         @db.VarChar
+  system_modified_at            DateTime?                       @db.Timestamptz(3)
+  slug                          String?                         @db.VarChar
+  slug_lock                     Boolean?                        @default(true)
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+  stories_locales               stories_locales[]
+  stories_rels                  stories_rels[]
+
+  @@index([created_at])
+  @@index([slug])
+  @@index([updated_at])
+}
+
+model stories_locales {
+  title                                                 String  @db.VarChar
+  subtitle                                              String? @db.VarChar
+  content                                               Json?
+  seo_keywords                                          String? @db.VarChar
+  seo_description                                       String? @db.VarChar
+  images_cover_photo_id                                 Int?
+  images_thumbnail_id                                   Int?
+  images_facebook_image_id                              Int?
+  id                                                    Int     @id @default(autoincrement())
+  locale                                                locales @map("_locale")
+  parent_id                                             Int     @map("_parent_id")
+  media_stories_locales_images_cover_photo_idTomedia    media?  @relation("stories_locales_images_cover_photo_idTomedia", fields: [images_cover_photo_id], references: [id], onUpdate: NoAction, map: "stories_locales_images_cover_photo_id_media_id_fk")
+  media_stories_locales_images_facebook_image_idTomedia media?  @relation("stories_locales_images_facebook_image_idTomedia", fields: [images_facebook_image_id], references: [id], onUpdate: NoAction, map: "stories_locales_images_facebook_image_id_media_id_fk")
+  media_stories_locales_images_thumbnail_idTomedia      media?  @relation("stories_locales_images_thumbnail_idTomedia", fields: [images_thumbnail_id], references: [id], onUpdate: NoAction, map: "stories_locales_images_thumbnail_id_media_id_fk")
+  stories                                               stories @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stories_locales_parent_id_fk")
+
+  @@unique([locale, parent_id], map: "stories_locales_locale_parent_id_unique")
+  @@index([images_cover_photo_id, locale], map: "stories_images_images_cover_photo_idx")
+  @@index([images_facebook_image_id, locale], map: "stories_images_images_facebook_image_idx")
+  @@index([images_thumbnail_id, locale], map: "stories_images_images_thumbnail_idx")
+}
+
+model stories_rels {
+  id             Int          @id @default(autoincrement())
+  order          Int?
+  parent_id      Int
+  path           String       @db.VarChar
+  categories_id  Int?
+  dinings_id     Int?
+  shops_id       Int?
+  attractions_id Int?
+  events_id      Int?
+  promotions_id  Int?
+  attractions    attractions? @relation(fields: [attractions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stories_rels_attractions_fk")
+  categories     categories?  @relation(fields: [categories_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stories_rels_categories_fk")
+  dinings        dinings?     @relation(fields: [dinings_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stories_rels_dinings_fk")
+  events         events?      @relation(fields: [events_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stories_rels_events_fk")
+  stories        stories      @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stories_rels_parent_fk")
+  promotions     promotions?  @relation(fields: [promotions_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stories_rels_promotions_fk")
+  shops          shops?       @relation(fields: [shops_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stories_rels_shops_fk")
+
+  @@index([attractions_id])
+  @@index([categories_id])
+  @@index([dinings_id])
+  @@index([events_id])
+  @@index([order])
+  @@index([parent_id], map: "stories_rels_parent_idx")
+  @@index([path])
+  @@index([promotions_id])
+  @@index([shops_id])
+}
+
+model users {
+  id                            Int                             @id @default(autoincrement())
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  email                         String                          @unique(map: "users_email_idx") @db.VarChar
+  reset_password_token          String?                         @db.VarChar
+  reset_password_expiration     DateTime?                       @db.Timestamptz(3)
+  salt                          String?                         @db.VarChar
+  hash                          String?                         @db.VarChar
+  login_attempts                Decimal?                        @default(0) @db.Decimal
+  lock_until                    DateTime?                       @db.Timestamptz(3)
+  name                          String?                         @db.VarChar
+  azure_id                      String?                         @unique(map: "users_azure_id_idx") @db.VarChar
+  payload_locked_documents_rels payload_locked_documents_rels[]
+  payload_preferences_rels      payload_preferences_rels[]
+  users_roles                   users_roles[]
+  users_sessions                users_sessions[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model users_roles {
+  order     Int
+  parent_id Int
+  value     enum_users_roles?
+  id        Int               @id @default(autoincrement())
+  users     users             @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "users_roles_parent_fk")
+
+  @@index([order])
+  @@index([parent_id], map: "users_roles_parent_idx")
+}
+
+model users_sessions {
+  order      Int       @map("_order")
+  parent_id  Int       @map("_parent_id")
+  id         String    @id @db.VarChar
+  created_at DateTime? @db.Timestamptz(3)
+  expires_at DateTime  @db.Timestamptz(3)
+  users      users     @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "users_sessions_parent_id_fk")
+
+  @@index([order], map: "users_sessions_order_idx")
+  @@index([parent_id], map: "users_sessions_parent_id_idx")
+}
+
+enum locales {
+  th
+  en
+  zh
+
+  @@map("_locales")
+}
+
+enum enum_api_sync_logs_status {
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum enum_api_sync_logs_unmapped_data_unmapped_categories_type {
+  shops
+  dinings
+}
+
+enum enum_attractions_status {
+  ACTIVE
+  INACTIVE
+  CLOSED
+  TEMPORARILY_CLOSED
+}
+
+enum enum_categories_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum enum_categories_type {
+  shops
+  dinings
+  promotions
+  events
+  directory
+}
+
+enum enum_dinings_opening_hours_per_day_day {
+  mon
+  tue
+  wed
+  thu
+  fri
+  sat
+  sun
+}
+
+enum enum_dinings_status {
+  ACTIVE
+  INACTIVE
+  CLOSED
+  TEMPORARILY_CLOSED
+  COMING_SOON
+}
+
+enum enum_events_promotion_type {
+  none
+  special_offer
+  discount
+  event
+  sale
+}
+
+enum enum_events_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum enum_floors_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum enum_gallery_collections_placement_key {
+  HOMEPAGE
+  ABOUT
+  DINING
+  SHOPPING
+  EVENTS
+  GETTING_HERE
+  DIRECTORY
+  ICON_CRAFT
+  ICON_LUXE
+  ATTRACTION
+  NEWS
+  STORIES
+  FACILITIES
+  RESIDENCES
+  TENANT_SERVICES
+  VISION_AND_MISSION
+  BOARD_OF_DIRECTORS
+  AWARDS
+}
+
+enum enum_getting_here_explore_icon_siam_placement_key {
+  HOMEPAGE
+  ABOUT
+  DINING
+  SHOPPING
+  EVENTS
+  PROMOTIONS
+  GETTING_HERE
+  DIRECTORY
+  ICON_CRAFT
+  ICON_LUXE
+  ATTRACTION
+  NEWS
+  STORIES
+  FACILITIES
+  RESIDENCES
+  TENANT_SERVICES
+  VISION_AND_MISSION
+  BOARD_OF_DIRECTORS
+  AWARDS
+}
+
+enum enum_getting_here_methods_type {
+  car
+  bts
+  bus
+  boat
+  hotel_boat
+  shuttle_boat
+}
+
+enum enum_getting_here_opening_hours_per_day_day {
+  mon
+  tue
+  wed
+  thu
+  fri
+  sat
+  sun
+}
+
+enum enum_homepage_status {
+  draft
+  published
+}
+
+enum enum_icon_craft_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum enum_icon_luxe_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum enum_news_press_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum enum_page_banners_placement_key {
+  HOMEPAGE
+  ABOUT
+  DINING
+  SHOPPING
+  EVENTS
+  PROMOTIONS
+  GETTING_HERE
+  DIRECTORY
+  ICON_CRAFT
+  ICON_LUXE
+  ATTRACTION
+  NEWS
+  STORIES
+  FACILITIES
+  RESIDENCES
+  TENANT_SERVICES
+  VISION_AND_MISSION
+  BOARD_OF_DIRECTORS
+  AWARDS
+}
+
+enum enum_page_banners_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum enum_promotions_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum enum_shops_opening_hours_per_day_day {
+  mon
+  tue
+  wed
+  thu
+  fri
+  sat
+  sun
+}
+
+enum enum_shops_status {
+  ACTIVE
+  INACTIVE
+  CLOSED
+  TEMPORARILY_CLOSED
+  COMING_SOON
+}
+
+enum enum_stickbar_status {
+  active
+  inactive
+}
+
+enum enum_stories_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum enum_users_roles {
+  admin
+  user
+}
