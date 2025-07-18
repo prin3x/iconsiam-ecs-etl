@@ -1229,6 +1229,13 @@ async function syncExternalApi() {
       "https://qa-api-internal.onesiam.com/spwdirectoryservice/v1/Directories/Icon/TenantMalls";
     const API_KEY = process.env.X_APIG_APPCODE;
 
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (process.env.NODE_ENV === "production") {
+      headers["Cookie"] = process.env.EXTERNAL_API_COOKIES || "";
+    }
+
     if (!API_URL) {
       throw new Error("EXTERNAL_API_URL environment variable is required");
     }
