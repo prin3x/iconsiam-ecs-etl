@@ -601,17 +601,15 @@ function determineRecordType(record: ExternalApiRecord): "dinings" | "shops" {
 }
 
 // Generate safe slug
-function generateSafeSlug(brandName: string, tenantId: string): string {
-  if (!brandName || !tenantId) return "";
+function generateSafeSlug(brandName: string): string {
+  if (!brandName) return "";
 
-  return (
-    brandName
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "") + `-${tenantId}`
-  );
+  return brandName
+    .replace(/[^\w\s-]+/g, "-") // Replace special chars with hyphens
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single
+    .replace(/^-|-$/g, "") // Remove leading/trailing hyphens
+    .toLowerCase();
 }
 
 // Sync a single record
@@ -693,8 +691,6 @@ async function syncRecord(record: ExternalApiRecord) {
 
     // Create base data with type assertion (without status - will be set differently for new vs existing)
     const baseData = {
-      slug: "",
-      unique_id: "",
       location_zone: record.zone || null,
       opening_hours_same_hours_every_day:
         parsedOpeningHours.same_hours_every_day,
@@ -706,6 +702,41 @@ async function syncRecord(record: ExternalApiRecord) {
       sort_order: new Decimal(0),
       pin_to_iconluxe: false,
     } as any;
+
+    // Check if record already exists
+    let existingRecord: any = null;
+
+    if (record.uniqueId) {
+      if (recordType === "dinings") {
+        existingRecord = await prisma.dinings.findFirst({
+          where: {
+            unique_id: record.uniqueId,
+          },
+          include: {
+            floors: true,
+          },
+        });
+      } else {
+        existingRecord = await prisma.shops.findFirst({
+          where: {
+            unique_id: record.uniqueId,
+          },
+          include: {
+            floors: true,
+          },
+        });
+      }
+    }
+
+    if (existingRecord) {
+      // For existing records, we don't want to update the slug
+    } else {
+      // For new records, generate a new slug
+      baseData.slug =
+        record.brandNameEn || record.shopNameEnglish
+          ? generateSafeSlug(record.brandNameEn || record.shopNameEnglish)
+          : `shop-${record.tenantId}`;
+    }
 
     // Add category if found - we'll handle this separately after create/update
     let categoryToConnect = categoryId;
@@ -767,31 +798,6 @@ async function syncRecord(record: ExternalApiRecord) {
     if (record.uniqueId) {
       baseData.unique_id = record.uniqueId;
       console.log(`   🆔 Unique ID assigned: ${record.uniqueId}`);
-    }
-
-    // Check if record already exists
-    let existingRecord: any = null;
-
-    if (record.uniqueId) {
-      if (recordType === "dinings") {
-        existingRecord = await prisma.dinings.findFirst({
-          where: {
-            unique_id: record.uniqueId,
-          },
-          include: {
-            floors: true,
-          },
-        });
-      } else {
-        existingRecord = await prisma.shops.findFirst({
-          where: {
-            unique_id: record.uniqueId,
-          },
-          include: {
-            floors: true,
-          },
-        });
-      }
     }
 
     if (existingRecord) {
@@ -942,17 +948,8 @@ async function syncRecord(record: ExternalApiRecord) {
       );
     } else {
       // Create new record
-      const newSlug =
-        record.brandNameEn || record.shopNameEnglish
-          ? generateSafeSlug(
-              record.brandNameEn || record.shopNameEnglish,
-              record.tenantId
-            )
-          : `shop-${record.tenantId}`;
-
       const createData = {
         ...baseData,
-        slug: newSlug,
         status: "INACTIVE" as const,
       } as any;
 
@@ -1032,7 +1029,7 @@ async function syncRecord(record: ExternalApiRecord) {
           record.brandNameEn || record.shopNameEnglish
         }`
       );
-      console.log(`   Created new slug: ${newSlug}`);
+      console.log(`   Created new slug: ${baseData.slug}`);
       console.log(`   Status set to: INACTIVE`);
     }
 
